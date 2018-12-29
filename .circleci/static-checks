@@ -1,0 +1,22 @@
+#!/bin/bash
+
+invalidFiles=$(go fmt ./...)
+if [ "$invalidFiles" ]; then
+  echo "These files have invalid formatting. If this script was run locally the formatting has been fixed:"
+  echo "$invalidFiles"
+  exit 1
+fi
+
+lintErrs=$(golint ./...)
+if [ "$lintErrs" ]; then
+    echo "Linting errors:"
+    echo "$lintErrs"
+    exit 1
+fi
+
+ignoredErrs=$(errcheck -ignoretests ./...)
+if [ "$ignoredErrs" ]; then
+    echo "Ignored errors occur at these places:"
+    echo "$ignoredErrs"
+    exit 1
+fi

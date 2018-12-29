@@ -1,0 +1,18 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.11.4
+    working_directory: /go/src/github.com/lag13/records
+    steps:
+      - checkout
+      - run:
+          name: Do static code analysis
+          command: |
+            go get -u github.com/golang/lint/golint
+            go get -u github.com/kisielk/errcheck
+            ./.circleci/static-checks
+      - run:
+          name: Run e2e tests
+          command: |
+            ./e2e/cmdline
