@@ -13,6 +13,10 @@ jobs:
             go get -u github.com/kisielk/errcheck
             ./.circleci/static-checks
       - run:
+          name: Run unit tests
+          command: |
+            go test ./...
+      - run:
           name: Run e2e tests
           command: |
             ./e2e/cmdline
