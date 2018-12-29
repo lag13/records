@@ -1,0 +1,8 @@
+#!/bin/bash
+
+output=$(go run main.go)
+if [ "$output" != "hello world" ]
+then
+    echo "Expected output \"hello world\" got \"$output\""
+    exit 1
+fi
