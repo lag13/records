@@ -1,8 +1,18 @@
-#!/bin/bash
+#!/bin/bash -e
 
-output=$(go run main.go)
-if [ "$output" != "hello world" ]
+output=$(go run main.go e2e/invalidData.txt)
+wantOutput=$(cat <<EOF
+Invalid Data Received:
+e2e/invalidData.csv:1: there should only be one type of separator in a single line but multiple separators (',', '|') were specified
+e2e/invalidData.csv:3: there were only 3 fields when there should have been 5
+e2e/invalidData.csv:4: date format should be YYYY-MM-DD
+EOF
+)
+if [ "$output" != "$wantOutput" ]
 then
-    echo "Expected output \"hello world\" got \"$output\""
+    echo "When running the command line app on invalid data, got output:
+$output"
+    echo "Want output:
+$wantOutput"
     exit 1
 fi

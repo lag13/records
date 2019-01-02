@@ -1,0 +1,4 @@
+Last,First,|Male,Red,2019-01-01
+Last|First|Female|Red|2019-01-01
+Last First Male
+Last,First,Female,Red,01/10/2019
