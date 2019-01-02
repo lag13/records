@@ -22,11 +22,12 @@ func main() {
 				parseErrs = append(parseErrs, parseErr)
 			}
 			if fh != nil {
-				fh.Close()
+				_ = fh.Close()
 			}
 		}
 	}
 	if len(parseErrs) > 0 {
+		fmt.Println("Invalid Input:")
 		fmt.Println(strings.Join(parseErrs, "\n"))
 		return
 	}
