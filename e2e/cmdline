@@ -1,11 +1,12 @@
 #!/bin/bash -e
 
-output=$(go run main.go e2e/invalidData.txt)
+output=$(go run main.go e2e/invalidData.txt e2e/nonexistent.txt)
 wantOutput=$(cat <<EOF
-Invalid Data Received:
-e2e/invalidData.csv:1: there should only be one type of separator in a single line but multiple separators (',', '|') were specified
-e2e/invalidData.csv:3: there were only 3 fields when there should have been 5
-e2e/invalidData.csv:4: date format should be YYYY-MM-DD
+Invalid Input:
+e2e/invalidData.txt:1: there should only be one type of separator in a single line but multiple separators (',', '|') were specified
+e2e/invalidData.txt:3: there were only 3 fields when there should have been 5
+e2e/invalidData.txt:4: date format should be YYYY-MM-DD
+e2e/nonexistent.txt: file does not exist
 EOF
 )
 if [ "$output" != "$wantOutput" ]
