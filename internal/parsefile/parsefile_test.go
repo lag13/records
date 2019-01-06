@@ -10,6 +10,13 @@ import (
 	"github.com/lag13/records/internal/parsefile"
 )
 
+type mockErrReader struct {
+}
+
+func (m mockErrReader) Read([]byte) (int, error) {
+	return 0, errors.New("non-nil error")
+}
+
 func TestParseFile(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -80,6 +87,14 @@ hey.txt:4: there were only 3 fields when there should have been 5`,
 				{"11", "12", "13", "14", "15"},
 			},
 			wantParseErr: "",
+		},
+		{
+			name: "error when reading file",
+			file: parsefile.File{
+				Name:    "err.txt",
+				Content: mockErrReader{},
+			},
+			wantParseErr: `err.txt: unexpected error reading file: non-nil error`,
 		},
 	}
 	for _, test := range tests {
