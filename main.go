@@ -13,7 +13,7 @@ func main() {
 	{ // parse each file
 		for _, fileName := range os.Args[1:] {
 			fh, err := os.Open(fileName)
-			parseErr := parsefile.ParseFile(parsefile.File{
+			_, parseErr := parsefile.ParseFile(parsefile.File{
 				Name:    fileName,
 				Content: fh,
 				OpenErr: err,
