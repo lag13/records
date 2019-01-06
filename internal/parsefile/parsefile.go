@@ -31,23 +31,24 @@ func whichSeparatorsUsedInLine(line string) []rune {
 // analyzed as well as returning errors from parsing. TODO: Right now
 // it just returns errors from parsing, we still need to add the part
 // where it returns useful data.
-func ParseFile(file File) string {
+func ParseFile(file File) ([][]string, string) {
 	if file.OpenErr != nil {
 		if os.IsNotExist(file.OpenErr) {
-			return fmt.Sprintf("%s: file does not exist", file.Name)
+			return nil, fmt.Sprintf("%s: file does not exist", file.Name)
 		}
 		if os.IsPermission(file.OpenErr) {
-			return fmt.Sprintf("%s: do not have permission to open this file", file.Name)
+			return nil, fmt.Sprintf("%s: do not have permission to open this file", file.Name)
 		}
-		return fmt.Sprintf("%s: encountered an unknown error when opening this file: %v", file.Name, file.OpenErr)
+		return nil, fmt.Sprintf("%s: encountered an unknown error when opening this file: %v", file.Name, file.OpenErr)
 	}
 	parseErrs := []string{}
 	scanner := bufio.NewScanner(file.Content)
 	lineNo := 0
+	allFields := [][]string{}
 	for scanner.Scan() {
 		// TODO: bufio.Scanner will NOT ignore empty lines.
 		// I'll keep it that way for now but I wonder if in
-		// the future we want to ignore empty lines.
+		// the future we want to ignore/allow empty lines.
 		lineNo++
 		seps := whichSeparatorsUsedInLine(scanner.Text())
 		if len(seps) == 0 {
@@ -62,6 +63,7 @@ func ParseFile(file File) string {
 			parseErrs = append(parseErrs, fmt.Sprintf("%s:%d: there should only be one type of separator in a single line but multiple separators (%s) were specified", file.Name, lineNo, sepsStr))
 			continue
 		}
+		fields := strings.Split(scanner.Text(), string(seps[0]))
 		// TODO: So far with this code all I've been doing is
 		// making sure that the file has the expected "shape"
 		// without caring about it's contents similar to what
@@ -74,12 +76,17 @@ func ParseFile(file File) string {
 		// not at all! Wanted to mention this though as a
 		// reminder of a potential refactor.
 		const desiredNumFields = 5
-		if numFields := len(strings.Split(scanner.Text(), string(seps[0]))); numFields != desiredNumFields {
+		if numFields := len(fields); numFields != desiredNumFields {
 			parseErrs = append(parseErrs, fmt.Sprintf("%s:%d: there were only %d fields when there should have been %d", file.Name, lineNo, numFields, desiredNumFields))
+			continue
 		}
+		allFields = append(allFields, fields)
 	}
 	if err := scanner.Err(); err != nil {
-		return fmt.Sprintf("AHHHHH WE SHOULD PROBABLY TEST THIS!!!")
+		return nil, fmt.Sprintf("AHHHHH WE SHOULD PROBABLY TEST THIS!!!")
 	}
-	return strings.Join(parseErrs, "\n")
+	if len(parseErrs) > 0 {
+		allFields = nil
+	}
+	return allFields, strings.Join(parseErrs, "\n")
 }
