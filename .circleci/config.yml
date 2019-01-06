@@ -13,6 +13,13 @@ jobs:
       - run:
           name: Do static code analysis
           command: |
+            # TODO: I feel like there should be a way to specify
+            # necessary binaries in the go.mod file and then they will
+            # get installed whenever you do things to download the
+            # modules. But I don't know the answer so I'm doing what I
+            # know namely 'go get' to install things.
+            go get golang.org/x/lint/golint
+            go get github.com/kisielk/errcheck
             ./.circleci/static-checks
       - run:
           name: Run e2e tests
