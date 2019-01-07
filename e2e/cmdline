@@ -1,16 +1,35 @@
 #!/bin/bash -e
 
-output=$(go run main.go e2e/invalidData.txt e2e/nonexistent.txt)
+# The structure/syntax/grammar of the data is invalid
+output=$(go run main.go e2e/invalidDataStructure.txt e2e/nonexistent.txt)
 wantOutput=$(cat <<EOF
 Invalid Input:
-e2e/invalidData.txt:1: there should only be one type of separator in a single line but multiple separators ('|', ',') were specified
-e2e/invalidData.txt:3: there were only 3 fields when there should have been 5
+e2e/invalidDataStructure.txt:1: there should only be one type of separator in a single line but multiple separators ('|', ',') were specified
+e2e/invalidDataStructure.txt:3: there were only 3 fields when there should have been 5
 e2e/nonexistent.txt: file does not exist
 EOF
 )
 if [ "$output" != "$wantOutput" ]
 then
-    echo "When running the command line app on invalid data, got output:
+    echo "When running the command line app on invalid data with an invalid structure, got output:
+$output"
+    echo "Want output:
+$wantOutput"
+    exit 1
+fi
+
+# The semantics of the data is invalid
+output=$(go run main.go e2e/invalidDataSemantics.txt)
+wantOutput=$(cat <<EOF
+Invalid Input:
+e2e/invalidDataSemantics.txt:2: gender (field 3) must be a non-empty string
+e2e/invalidDataSemantics.txt:2: date (field 5) must have the format year-month-day
+e2e/invalidDataSemantics.txt:3: last name (field 1) must be a non-empty string
+EOF
+)
+if [ "$output" != "$wantOutput" ]
+then
+    echo "When running the command line app with data that has incorrect semantics, got output:
 $output"
     echo "Want output:
 $wantOutput"
