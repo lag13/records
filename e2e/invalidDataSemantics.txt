@@ -1,0 +1,3 @@
+Last,First,Gender,Color,2019-01-01
+Last,First,,Color,2019
+,First,Gender,Color,2019-01-01
