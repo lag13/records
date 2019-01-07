@@ -1,4 +1,6 @@
 // Package parsefile parses file information so it can be analyzed.
+// TODO: Perhaps an informative name for this file could be
+// multicharsv if I generalized more.
 package parsefile
 
 import (
@@ -9,7 +11,15 @@ import (
 	"strings"
 )
 
-// File contains raw data coming from a call to os.Open().
+// File contains raw data coming from a call to os.Open(). TODO: I
+// like that this package gets its data from an io.Reader because it
+// makes it more reusable (for example we could read from stdin or
+// from the body of a http request). But I do not like the reliance on
+// the os package. It's not terrible (you can just ignore the OpenErr
+// field when using this package) but it feels a little odd. If I was
+// a new person reading this package in isolation I would feel
+// confused. In a future iteration I get the feeling we should move
+// the logic relating to the os package somewhere else.
 type File struct {
 	Name    string
 	Content io.Reader
@@ -35,7 +45,17 @@ func parseErrPrefix(filename string, lineNum int, msg string) string {
 }
 
 // ParseFile converts file information into information which can be
-// analyzed as well as returning errors from parsing.
+// analyzed as well as returning errors from parsing. TODO: I would
+// prefer returning a []string for the parse errors rather than a
+// single string which has newlines for each parse error. What I have
+// now works fine for our use case but it feels right to keep the data
+// as close as possible to its original form rather than changing it
+// around. TODO: I think the final iteration of this function should
+// return an error as the third argument in case something related to
+// reading the file fails because that is a different kind of "error"
+// than invalid structure to a particular line in the file. One is the
+// user's fault and the other is something actually went wrong. It's
+// sort of like a 4XX vs 5XX status code.
 func ParseFile(file File) ([][]string, string) {
 	if file.OpenErr != nil {
 		if os.IsNotExist(file.OpenErr) {
@@ -47,6 +67,14 @@ func ParseFile(file File) ([][]string, string) {
 		return nil, parseErrPrefix(file.Name, 0, fmt.Sprintf("encountered an unknown error when opening this file: %v", file.OpenErr))
 	}
 	parseErrs := []string{}
+	// TODO: I could see us wanting to ignore empty lines but
+	// bufio.Scanner does NOT ignore empty lines. Keep this in
+	// mind. TODO: Keep in mind that bufio.Scanner has a limited
+	// buffer size:
+	// https://stackoverflow.com/questions/8757389/reading-file-line-by-line-in-go.
+	// I don't imagine it would be a problem especially for this
+	// practice problem but I wanted to think about it a little
+	// more if I tried to make this a more generic package.
 	scanner := bufio.NewScanner(file.Content)
 	lineNum := 0
 	allFields := [][]string{}
@@ -55,8 +83,8 @@ func ParseFile(file File) ([][]string, string) {
 		seps := whichSeparatorsUsedInLine(scanner.Text())
 		// TODO: So far with this code all I've been doing is
 		// making sure that the file has the expected "shape"
-		// without caring about it's contents similar to what
-		// this blog goes through:
+		// without caring about it's semantics similar in
+		// spirit to this blog post:
 		// https://dev.to/matthewsj/you-could-have-designed-the-jsondecode-library-2d8.
 		// That all makes me think that I could make this a
 		// more general package, a sort of "CSV parser which
