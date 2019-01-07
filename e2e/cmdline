@@ -23,7 +23,7 @@ output=$(go run main.go e2e/invalidDataSemantics.txt)
 wantOutput=$(cat <<EOF
 Invalid Input:
 e2e/invalidDataSemantics.txt:2: gender (field 3) must be a non-empty string
-e2e/invalidDataSemantics.txt:2: date (field 5) must have the format year-month-day
+e2e/invalidDataSemantics.txt:2: date of birth (field 5) must have the format YYYY-MM-DD
 e2e/invalidDataSemantics.txt:3: last name (field 1) must be a non-empty string
 EOF
 )
