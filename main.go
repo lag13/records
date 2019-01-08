@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	persons := []person.Person{}
 	parseErrs := []string{}
 	// parse each file. TODO: This is getting QUITE messy and
 	// feels a little too complicated for being in main. I'm
@@ -37,12 +38,13 @@ func main() {
 				continue
 			}
 			for i, line := range lines {
-				_, semParseErrs := person.Parse(line)
+				p, semParseErrs := person.Parse(line)
 				annotatedSemParseErrs := []string{}
 				for _, semParseErr := range semParseErrs {
 					annotatedSemParseErrs = append(annotatedSemParseErrs, fmt.Sprintf("%s:%d: %s", fileName, i+1, semParseErr))
 				}
 				parseErrs = append(parseErrs, annotatedSemParseErrs...)
+				persons = append(persons, p)
 			}
 		}
 	}
@@ -50,5 +52,9 @@ func main() {
 		fmt.Println("Invalid Input:")
 		fmt.Println(strings.Join(parseErrs, "\n"))
 		return
+	}
+	person.SortByGenderThenLastName(persons)
+	for _, p := range persons {
+		fmt.Println(person.Marshal(p))
 	}
 }

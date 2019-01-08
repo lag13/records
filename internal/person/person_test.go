@@ -1,6 +1,7 @@
 package person_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -52,5 +53,57 @@ func TestParse(t *testing.T) {
 				t.Errorf("got person %+v, want %+v", got, want)
 			}
 		})
+	}
+}
+
+func TestMarshal(t *testing.T) {
+	tests := []struct {
+		p       person.Person
+		wantStr string
+	}{
+		{
+			person.Person{"Last", "First", "Gender", "Color", time.Date(2003, time.May, 15, 0, 0, 0, 0, time.UTC)},
+			"Last,First,Gender,Color,05/15/2003",
+		},
+		{
+			person.Person{"Bobbo", "Bob", "Male", "Grey", time.Date(1998, time.December, 2, 0, 0, 0, 0, time.UTC)},
+			"Bobbo,Bob,Male,Grey,12/02/1998",
+		},
+	}
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("running test %d", i), func(t *testing.T) {
+			if got, want := person.Marshal(test.p), test.wantStr; got != want {
+				t.Errorf("got %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestSortByGenderThenLastName(t *testing.T) {
+	persons := []person.Person{
+		{LastName: "Aarons", Gender: "Male"},
+		{LastName: "Brady", Gender: "Female"},
+		{LastName: "Aarons", Gender: "Female"},
+		{LastName: "anderson", Gender: "Female"},
+		{LastName: "Zed", Gender: "Female"},
+		{LastName: "Tom", Gender: "Male"},
+		{LastName: "Bob", Gender: "Male"},
+	}
+	wantPersons := []person.Person{
+		{LastName: "Aarons", Gender: "Female"},
+		{LastName: "anderson", Gender: "Female"},
+		{LastName: "Brady", Gender: "Female"},
+		{LastName: "Zed", Gender: "Female"},
+		{LastName: "Aarons", Gender: "Male"},
+		{LastName: "Bob", Gender: "Male"},
+		{LastName: "Tom", Gender: "Male"},
+	}
+	person.SortByGenderThenLastName(persons)
+	if got, want := persons, wantPersons; !reflect.DeepEqual(got, want) {
+		// TODO: This error message if the test fails is simply
+		// terrible but it's such an easy test to pass that I don't
+		// care right now. I would really like to go back and make the
+		// comparisons better though.
+		t.Errorf("got sorted list %v, wanted %v", got, want)
 	}
 }
