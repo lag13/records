@@ -35,3 +35,47 @@ $output"
 $wantOutput"
     exit 1
 fi
+
+# The command works as expected
+output=$(go run main.go e2e/atla.csv e2e/lotr.ssv e2e/wot.psv)
+
+# The desired output was created by running this bash one-liner:
+
+# cat e2e/atla.csv e2e/lotr.ssv e2e/wot.psv | tr '| ' ',' | sort --ignore-case --field-separator=, --key=3,3 --key=1,1 | sed 's:\([1-9][0-9][0-9][0-9]\)-\([0-1][0-9]\)-\([0-3][0-9]\):\2/\3/\1:'
+
+# Who needs fancy languages when you have bash? Bash leads you on the
+# path to salvation: man 1 bash "And he was not scared for he could
+# see the truth, that all the world was a nail and he had his hammer"
+wantOutput=$(cat <<EOF
+al'Meara,Nynaeve,Female,Yellow,11/03/1886
+al'Vere,Egwene,Female,White,11/03/1888
+BlindBandit,Toph,Female,Green,03/29/1846
+Crazy,Azula,Female,Blood-Red,12/30/1842
+Damodred,Moiraine,Female,Blue,09/15/1876
+Finarfin,Galadriel,Female,White,02/01/1200
+Rohan,Eowyn,Female,Gold,07/27/1950
+SoFullOfHope,Katara,Female,Blue,09/21/1846
+Undomiel,Arwen,Female,Brown,10/10/1300
+al'Thor,Rand,Male,Red,01/02/1890
+Avatar,Aang,Male,Light-Orange,12/13/1760
+Aybara,Perrin,Male,Yellow,05/06/1890
+Baggins,Frodo,Male,Green,09/22/1900
+Brandybuck,Meriadoc,Male,Green,08/12/1914
+Cauthon,Mat,Male,Black,03/04/1890
+Grey,Gandalf,Male,Grey,04/19/1100
+Isildur,Aragorn,Male,Brown,08/20/1600
+Lee,Zuko,Male,Red,07/04/1842
+Mandragoran,al'Lan,Male,Green,07/11/1866
+MeatAndSarcasmGuy,Sokka,Male,Blue,10/17/1845
+Took,Peregrin,Male,Yellow,06/09/1932
+Uncle,Iroh,Male,White,08/24/1820
+EOF
+)
+if [ "$output" != "$wantOutput" ]
+then
+    echo "When running the command line app to sort by gender (females first then sort by last name), got output:
+$output"
+    echo "Want output:
+$wantOutput"
+    exit 1
+fi
