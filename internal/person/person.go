@@ -61,13 +61,57 @@ func Marshal(p Person) string {
 	return fmt.Sprintf("%s,%s,%s,%s,%02d/%02d/%d", p.LastName, p.FirstName, p.Gender, p.FavoriteColor, month, day, year)
 }
 
-// SortByGenderThenLastName sorts a slice of Person structs in place
-// oby gender then by last name.
-func SortByGenderThenLastName(persons []Person) {
-	sort.SliceStable(persons, func(i int, j int) bool {
-		if persons[i].Gender == persons[j].Gender {
-			return strings.ToLower(persons[i].LastName) < strings.ToLower(persons[j].LastName)
-		}
-		return persons[i].Gender < persons[j].Gender
-	})
+// These constants are used to dispatch to a certain way of sorting
+// the person data.
+const (
+	GenderThenLastNameAsc = "gender-lastname-asc"
+	BirthDateAsc          = "birthdate-asc"
+	LastNameDesc          = "lastname-desc"
+)
+
+// SortStyles contains all the possible sort styles that can be
+// achieved. TODO: As it stands now this variable only gets used in
+// main to display all possible values for a particular flag AND it
+// has no direct relation to the Sort() function below. This is no
+// good because we could (hypothetically) add another item to this
+// list, not update Sort(), user thinks they can pass another sort
+// type, and then Sort() will fail because it does not actually
+// support said type. This should be remedied. I'm picturing this
+// variable being a map from sort type to function which sorts a list
+// of people. Then where main does the flag validation it can
+// literally check if the key exists in this map and if it does not
+// then they print the error message otherwise they use the function
+// at that key to perform the sorting. Doing it like this also means
+// that we don't need the panic inside the Sort() function, which I'm
+// not a huge fan of (because there won't be one big function anymore,
+// there will be 3 functions which do a particular kind of sorting!).
+// I'm glad I thought this through, I knew the panic made me feel a
+// bit weird but I wasn't sure as to why.
+var SortStyles = []string{GenderThenLastNameAsc, BirthDateAsc, LastNameDesc}
+
+// Sort sorts a slice of Person structs in place in a couple different
+// ways.
+func Sort(sortStyle string, persons []Person) {
+	if sortStyle == BirthDateAsc {
+		sort.SliceStable(persons, func(i int, j int) bool {
+			return persons[i].DateOfBirth.Before(persons[j].DateOfBirth)
+		})
+		return
+	}
+	if sortStyle == LastNameDesc {
+		sort.SliceStable(persons, func(i int, j int) bool {
+			return strings.ToLower(persons[i].LastName) > strings.ToLower(persons[j].LastName)
+		})
+		return
+	}
+	if sortStyle == GenderThenLastNameAsc {
+		sort.SliceStable(persons, func(i int, j int) bool {
+			if persons[i].Gender == persons[j].Gender {
+				return strings.ToLower(persons[i].LastName) < strings.ToLower(persons[j].LastName)
+			}
+			return persons[i].Gender < persons[j].Gender
+		})
+		return
+	}
+	panic(fmt.Sprintf("invalid sort style %q passed", sortStyle))
 }

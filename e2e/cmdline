@@ -37,7 +37,7 @@ $wantOutput"
 fi
 
 # The command works as expected
-output=$(go run main.go e2e/atla.csv e2e/lotr.ssv e2e/wot.psv)
+output=$(go run main.go -sort gender-lastname-asc e2e/atla.csv e2e/lotr.ssv e2e/wot.psv)
 
 # The desired output was created by running this bash one-liner:
 

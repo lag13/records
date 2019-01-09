@@ -79,31 +79,78 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
-func TestSortByGenderThenLastName(t *testing.T) {
-	persons := []person.Person{
-		{LastName: "Aarons", Gender: "Male"},
-		{LastName: "Brady", Gender: "Female"},
-		{LastName: "Aarons", Gender: "Female"},
-		{LastName: "anderson", Gender: "Female"},
-		{LastName: "Zed", Gender: "Female"},
-		{LastName: "Tom", Gender: "Male"},
-		{LastName: "Bob", Gender: "Male"},
+func TestSort(t *testing.T) {
+	tests := []struct {
+		sortStyle   string
+		persons     []person.Person
+		wantPersons []person.Person
+	}{
+		{
+			person.GenderThenLastNameAsc,
+			[]person.Person{
+				{LastName: "Aarons", Gender: "Male"},
+				{LastName: "Brady", Gender: "Female"},
+				{LastName: "Aarons", Gender: "Female"},
+				{LastName: "anderson", Gender: "Female"},
+				{LastName: "Zed", Gender: "Female"},
+				{LastName: "Tom", Gender: "Male"},
+				{LastName: "Bob", Gender: "Male"},
+			},
+			[]person.Person{
+				{LastName: "Aarons", Gender: "Female"},
+				{LastName: "anderson", Gender: "Female"},
+				{LastName: "Brady", Gender: "Female"},
+				{LastName: "Zed", Gender: "Female"},
+				{LastName: "Aarons", Gender: "Male"},
+				{LastName: "Bob", Gender: "Male"},
+				{LastName: "Tom", Gender: "Male"},
+			},
+		},
+		{
+			person.BirthDateAsc,
+			[]person.Person{
+				{DateOfBirth: time.Date(1900, time.December, 2, 0, 0, 0, 0, time.UTC)},
+				{DateOfBirth: time.Date(2000, time.December, 2, 0, 0, 0, 0, time.UTC)},
+				{DateOfBirth: time.Date(1998, time.May, 2, 0, 0, 0, 0, time.UTC)},
+				{DateOfBirth: time.Date(1998, time.December, 2, 0, 0, 0, 0, time.UTC)},
+			},
+			[]person.Person{
+				{DateOfBirth: time.Date(1900, time.December, 2, 0, 0, 0, 0, time.UTC)},
+				{DateOfBirth: time.Date(1998, time.May, 2, 0, 0, 0, 0, time.UTC)},
+				{DateOfBirth: time.Date(1998, time.December, 2, 0, 0, 0, 0, time.UTC)},
+				{DateOfBirth: time.Date(2000, time.December, 2, 0, 0, 0, 0, time.UTC)},
+			},
+		},
+		{
+			person.LastNameDesc,
+			[]person.Person{
+				{LastName: "Aarons"},
+				{LastName: "Brady"},
+				{LastName: "anderson"},
+				{LastName: "Zed"},
+				{LastName: "Tom"},
+				{LastName: "Bob"},
+			},
+			[]person.Person{
+				{LastName: "Zed"},
+				{LastName: "Tom"},
+				{LastName: "Brady"},
+				{LastName: "Bob"},
+				{LastName: "anderson"},
+				{LastName: "Aarons"},
+			},
+		},
 	}
-	wantPersons := []person.Person{
-		{LastName: "Aarons", Gender: "Female"},
-		{LastName: "anderson", Gender: "Female"},
-		{LastName: "Brady", Gender: "Female"},
-		{LastName: "Zed", Gender: "Female"},
-		{LastName: "Aarons", Gender: "Male"},
-		{LastName: "Bob", Gender: "Male"},
-		{LastName: "Tom", Gender: "Male"},
-	}
-	person.SortByGenderThenLastName(persons)
-	if got, want := persons, wantPersons; !reflect.DeepEqual(got, want) {
-		// TODO: This error message if the test fails is simply
-		// terrible but it's such an easy test to pass that I don't
-		// care right now. I would really like to go back and make the
-		// comparisons better though.
-		t.Errorf("got sorted list %v, wanted %v", got, want)
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("sorting with sort style %s", test.sortStyle), func(t *testing.T) {
+			person.Sort(test.sortStyle, test.persons)
+			if got, want := test.persons, test.wantPersons; !reflect.DeepEqual(got, want) {
+				// TODO: This error message if the test fails is simply
+				// terrible but it's such an easy test to pass that I don't
+				// care right now. I would really like to go back and make the
+				// comparisons better though.
+				t.Errorf("got sorted list %v, wanted %v", got, want)
+			}
+		})
 	}
 }
