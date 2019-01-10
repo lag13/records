@@ -7,7 +7,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 )
 
@@ -23,7 +22,6 @@ import (
 type File struct {
 	Name    string
 	Content io.Reader
-	OpenErr error
 }
 
 func whichSeparatorsUsedInLine(line string) []rune {
@@ -57,15 +55,6 @@ func parseErrPrefix(filename string, lineNum int, msg string) string {
 // user's fault and the other is something actually went wrong. It's
 // sort of like a 4XX vs 5XX status code.
 func ParseFile(file File) ([][]string, string) {
-	if file.OpenErr != nil {
-		if os.IsNotExist(file.OpenErr) {
-			return nil, parseErrPrefix(file.Name, 0, "file does not exist")
-		}
-		if os.IsPermission(file.OpenErr) {
-			return nil, parseErrPrefix(file.Name, 0, "do not have permission to open this file")
-		}
-		return nil, parseErrPrefix(file.Name, 0, fmt.Sprintf("encountered an unknown error when opening this file: %v", file.OpenErr))
-	}
 	parseErrs := []string{}
 	// TODO: I could see us wanting to ignore empty lines but
 	// bufio.Scanner does NOT ignore empty lines. Keep this in

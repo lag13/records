@@ -1,12 +1,32 @@
-#!/bin/bash -e
+#!/bin/bash
+
+# I decided to compile this because if you run a go program with 'go
+# run' and your code calls os.Exit then 'go run' will print out the
+# exit code and checking for that in tests did not feel right to me:
+# https://gobyexample.com/exit
+go build main.go
+
+# We could not open the files that were specified for whatever reason
+output=$(./main e2e/nonexistent.txt e2e/nonexistent2.txt 2>&1)
+wantOutput=$(cat <<EOF
+open e2e/nonexistent.txt: no such file or directory
+open e2e/nonexistent2.txt: no such file or directory
+EOF
+)
+if [ "$output" != "$wantOutput" ]
+then
+    echo "When running the command line app on invalid data with an invalid structure, got output:
+$output"
+    echo "Want output:
+$wantOutput"
+    exit 1
+fi
 
 # The structure/syntax/grammar of the data is invalid
-output=$(go run main.go e2e/invalidDataStructure.txt e2e/nonexistent.txt)
+output=$(./main e2e/invalidDataStructure.txt 2>&1)
 wantOutput=$(cat <<EOF
-Invalid Input:
 e2e/invalidDataStructure.txt:1: there should only be one type of separator in a single line but multiple separators ('|', ',') were specified
 e2e/invalidDataStructure.txt:3: there were only 3 fields when there should have been 5
-e2e/nonexistent.txt: file does not exist
 EOF
 )
 if [ "$output" != "$wantOutput" ]
@@ -19,9 +39,8 @@ $wantOutput"
 fi
 
 # The semantics of the data is invalid
-output=$(go run main.go e2e/invalidDataSemantics.txt)
+output=$(./main e2e/invalidDataSemantics.txt 2>&1)
 wantOutput=$(cat <<EOF
-Invalid Input:
 e2e/invalidDataSemantics.txt:2: gender (field 3) must be a non-empty string
 e2e/invalidDataSemantics.txt:2: date of birth (field 5) must have the format YYYY-MM-DD
 e2e/invalidDataSemantics.txt:3: last name (field 1) must be a non-empty string
@@ -37,7 +56,7 @@ $wantOutput"
 fi
 
 # The command works as expected
-output=$(go run main.go -sort gender-lastname-asc e2e/atla.csv e2e/lotr.ssv e2e/wot.psv)
+output=$(./main -sort gender-lastname-asc e2e/atla.csv e2e/lotr.ssv e2e/wot.psv)
 
 # The desired output was created by running this bash one-liner:
 

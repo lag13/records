@@ -2,7 +2,6 @@ package parsefile_test
 
 import (
 	"errors"
-	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -24,42 +23,6 @@ func TestParseFile(t *testing.T) {
 		wantFields   [][]string
 		wantParseErr string
 	}{
-		{
-			name: "file does not exist",
-			file: parsefile.File{
-				Name:    "some/file.txt",
-				Content: nil,
-				OpenErr: os.ErrNotExist,
-			},
-			wantParseErr: "some/file.txt: file does not exist",
-		},
-		{
-			name: "file has bad permissions",
-			file: parsefile.File{
-				Name:    "badperm/file.txt",
-				Content: nil,
-				OpenErr: os.ErrPermission,
-			},
-			wantParseErr: "badperm/file.txt: do not have permission to open this file",
-		},
-		{
-			name: "unknown error",
-			file: parsefile.File{
-				Name:    "itsa/mystery.txt",
-				Content: nil,
-				OpenErr: errors.New("unknown error"),
-			},
-			wantParseErr: "itsa/mystery.txt: encountered an unknown error when opening this file: unknown error",
-		},
-		{
-			name: "unknown open error",
-			file: parsefile.File{
-				Name:    "itsa/mystery.txt",
-				Content: nil,
-				OpenErr: errors.New("unknown error"),
-			},
-			wantParseErr: "itsa/mystery.txt: encountered an unknown error when opening this file: unknown error",
-		},
 		{
 			name: "so many problems with the file",
 			file: parsefile.File{

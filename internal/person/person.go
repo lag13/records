@@ -70,23 +70,7 @@ const (
 )
 
 // SortStyles contains all the possible sort styles that can be
-// achieved. TODO: As it stands now this variable only gets used in
-// main to display all possible values for a particular flag AND it
-// has no direct relation to the Sort() function below. This is no
-// good because we could (hypothetically) add another item to this
-// list, not update Sort(), user thinks they can pass another sort
-// type, and then Sort() will fail because it does not actually
-// support said type. This should be remedied. I'm picturing this
-// variable being a map from sort type to function which sorts a list
-// of people. Then where main does the flag validation it can
-// literally check if the key exists in this map and if it does not
-// then they print the error message otherwise they use the function
-// at that key to perform the sorting. Doing it like this also means
-// that we don't need the panic inside the Sort() function, which I'm
-// not a huge fan of (because there won't be one big function anymore,
-// there will be 3 functions which do a particular kind of sorting!).
-// I'm glad I thought this through, I knew the panic made me feel a
-// bit weird but I wasn't sure as to why.
+// achieved. TODO: See TODO in main around sortStyle
 var SortStyles = []string{GenderThenLastNameAsc, BirthDateAsc, LastNameDesc}
 
 // Sort sorts a slice of Person structs in place in a couple different
