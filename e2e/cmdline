@@ -67,8 +67,8 @@ $wantOutput"
     exit 1
 fi
 
-# The command works as expected
-output=$(./main -sort gender-lastname-asc e2e/atla.csv e2e/lotr.ssv e2e/wot.psv)
+# The command works as expected when reading from files
+output=$(./main e2e/atla.csv e2e/lotr.ssv e2e/wot.psv)
 
 # The desired output was created by running this bash one-liner:
 
@@ -100,6 +100,42 @@ Mandragoran,al'Lan,Male,Green,07/11/1866
 MeatAndSarcasmGuy,Sokka,Male,Blue,10/17/1845
 Took,Peregrin,Male,Yellow,06/09/1932
 Uncle,Iroh,Male,White,08/24/1820
+EOF
+)
+if [ "$output" != "$wantOutput" ]
+then
+    echo "When running the command line app to sort by gender (females first then sort by last name), got output:
+$output"
+    echo "Want output:
+$wantOutput"
+    exit 1
+fi
+
+# The command works as expected when reading from stdin
+output=$(cat e2e/atla.csv e2e/lotr.ssv e2e/wot.psv | ./main -sort lastname-desc)
+wantOutput=$(cat <<EOF
+Undomiel,Arwen,Female,Brown,10/10/1300
+Uncle,Iroh,Male,White,08/24/1820
+Took,Peregrin,Male,Yellow,06/09/1932
+SoFullOfHope,Katara,Female,Blue,09/21/1846
+Rohan,Eowyn,Female,Gold,07/27/1950
+MeatAndSarcasmGuy,Sokka,Male,Blue,10/17/1845
+Mandragoran,al'Lan,Male,Green,07/11/1866
+Lee,Zuko,Male,Red,07/04/1842
+Isildur,Aragorn,Male,Brown,08/20/1600
+Grey,Gandalf,Male,Grey,04/19/1100
+Finarfin,Galadriel,Female,White,02/01/1200
+Damodred,Moiraine,Female,Blue,09/15/1876
+Crazy,Azula,Female,Blood-Red,12/30/1842
+Cauthon,Mat,Male,Black,03/04/1890
+Brandybuck,Meriadoc,Male,Green,08/12/1914
+BlindBandit,Toph,Female,Green,03/29/1846
+Baggins,Frodo,Male,Green,09/22/1900
+Aybara,Perrin,Male,Yellow,05/06/1890
+Avatar,Aang,Male,Light-Orange,12/13/1760
+al'Vere,Egwene,Female,White,11/03/1888
+al'Thor,Rand,Male,Red,01/02/1890
+al'Meara,Nynaeve,Female,Yellow,11/03/1886
 EOF
 )
 if [ "$output" != "$wantOutput" ]

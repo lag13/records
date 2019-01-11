@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -11,6 +12,13 @@ import (
 	"github.com/lag13/records/internal/person"
 )
 
+// TODO: I feel like calls to this function should happen in one
+// single place (which would also remove the need for said function).
+// Like every file which returns data about parse errors should,
+// instead of returning type []string, should be returning some sort
+// of struct like []struct{fileName, errLines: []struct{lineNum,
+// errMsg}} then main will assemble that information in one single
+// place. Not sure yet.
 func prependFileInfo(fileName string, lineNum int, msgs []string) []string {
 	info := []string{}
 	for _, msg := range msgs {
@@ -34,7 +42,11 @@ func prependFileInfo(fileName string, lineNum int, msgs []string) []string {
 // that is necessary for the unit to expose. Applying that
 // transformation on multiple things is pretty trivial. Hmmmmmm
 func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
-	fhs := []*os.File{}
+	type simpleFile struct {
+		Name    string
+		Content io.Reader
+	}
+	files := []simpleFile{}
 	parseErrs := []string{}
 	{ // open all specified files
 		for _, fileName := range fileNames {
@@ -54,18 +66,21 @@ func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 			// gometalinter not to run, say errcheck, on a
 			// specific line
 			defer func(fh *os.File) { _ = fh.Close() }(fh)
-			fhs = append(fhs, fh)
+			files = append(files, simpleFile{Name: fileName, Content: fh})
 		}
 	}
 	if len(parseErrs) > 0 {
 		return nil, parseErrs
 	}
+	if len(files) == 0 {
+		files = append(files, simpleFile{Name: "(standard input)", Content: os.Stdin})
+	}
 	filesRecords := [][][]string{}
 	{ // validate the syntax of the data
-		for _, fh := range fhs {
-			records, csvParseErrs := multicsv.ReadAll("|, ", 5, fh)
+		for _, file := range files {
+			records, csvParseErrs := multicsv.ReadAll("|, ", 5, file.Content)
 			if len(csvParseErrs) > 0 {
-				parseErrs = append(parseErrs, prependFileInfo(fh.Name(), 0, csvParseErrs)...)
+				parseErrs = append(parseErrs, prependFileInfo(file.Name, 0, csvParseErrs)...)
 				continue
 			}
 			filesRecords = append(filesRecords, records)
@@ -85,11 +100,11 @@ func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 	}
 	persons := []person.Person{}
 	{ // parse each file into structured data which can be sorted
-		for i, fileName := range fileNames {
+		for i, file := range files {
 			for j, line := range filesRecords[i] {
 				p, semParseErrs := person.Parse(line)
 				if len(semParseErrs) > 0 {
-					parseErrs = append(parseErrs, prependFileInfo(fileName, j+1, semParseErrs)...)
+					parseErrs = append(parseErrs, prependFileInfo(file.Name, j+1, semParseErrs)...)
 					continue
 				}
 				persons = append(persons, p)
