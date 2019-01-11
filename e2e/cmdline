@@ -6,6 +6,18 @@
 # https://gobyexample.com/exit
 go build main.go
 
+# Invalid value for a command line flag passed
+output=$(./main -sort invalid-AHHHHH 2>&1)
+wantOutputContains="invalid value, allowed values are"
+if [[ "$output" != *"$wantOutputContains"* ]]
+then
+    echo "When running the command line app with an invalid flag output was:
+
+$output
+
+which does NOT contain the string: $wantOutputContains"
+fi
+
 # We could not open the files that were specified for whatever reason
 output=$(./main e2e/nonexistent.txt e2e/nonexistent2.txt 2>&1)
 wantOutput=$(cat <<EOF

@@ -4,11 +4,24 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
-	"github.com/lag13/records/internal/parsefile"
+	"github.com/lag13/records/internal/multicsv"
 	"github.com/lag13/records/internal/person"
 )
+
+func prependFileInfo(fileName string, lineNum int, msgs []string) []string {
+	info := []string{}
+	for _, msg := range msgs {
+		if lineNum == 0 {
+			info = append(info, fmt.Sprintf("%s:%s", fileName, msg))
+			continue
+		}
+		info = append(info, fmt.Sprintf("%s:%d: %s", fileName, lineNum, msg))
+	}
+	return info
+}
 
 // TODO: Although I like this logic better because it is a little more
 // pipeline'y and because it prints out similar groupings of errors
@@ -47,18 +60,15 @@ func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 	if len(parseErrs) > 0 {
 		return nil, parseErrs
 	}
-	rawFileContents := [][][]string{}
+	filesRecords := [][][]string{}
 	{ // validate the syntax of the data
 		for _, fh := range fhs {
-			lines, parseErr := parsefile.ParseFile(parsefile.File{
-				Name:    fh.Name(),
-				Content: fh,
-			})
-			if parseErr != "" {
-				parseErrs = append(parseErrs, parseErr)
+			records, csvParseErrs := multicsv.ReadAll("|, ", 5, fh)
+			if len(csvParseErrs) > 0 {
+				parseErrs = append(parseErrs, prependFileInfo(fh.Name(), 0, csvParseErrs)...)
 				continue
 			}
-			rawFileContents = append(rawFileContents, lines)
+			filesRecords = append(filesRecords, records)
 		}
 	}
 	// TODO: I don't like the repetition of this check but I'm not
@@ -76,20 +86,10 @@ func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 	persons := []person.Person{}
 	{ // parse each file into structured data which can be sorted
 		for i, fileName := range fileNames {
-			for j, line := range rawFileContents[i] {
+			for j, line := range filesRecords[i] {
 				p, semParseErrs := person.Parse(line)
 				if len(semParseErrs) > 0 {
-					// TODO: All this indentation
-					// is just... awful.
-					for _, semParseErr := range semParseErrs {
-						// TODO: This format
-						// is repeated here
-						// and inside
-						// parsefile.go and it
-						// should be
-						// abstracted.
-						parseErrs = append(parseErrs, fmt.Sprintf("%s:%d: %s", fileName, j+1, semParseErr))
-					}
+					parseErrs = append(parseErrs, prependFileInfo(fileName, j+1, semParseErrs)...)
 					continue
 				}
 				persons = append(persons, p)
@@ -99,51 +99,51 @@ func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 	return persons, parseErrs
 }
 
-// TODO: Earlier I was planning the person package be responsible for
-// knowing the possible values of this sort style string but I think
-// that's wrong. Why should that package be dictating valid flag
-// arguments? Put another way, if I want to sort something in a
-// specific way, I would prefer to just call the function that does it
-// for me instead of needing to know which string argument to pass in
-// which *gets* me the sort that I want. But now it feels like we're
-// adding enough logic where I might feel better making some sort of
-// "flags" package. But what would we test exactly? And what would we
-// expose? I suppose we'd check that the default values and name are
-// as expected? And then we can test any of the custom flag value
-// stuff that we do?
-type sortStyle string
+const defaultSort = "gender-lastname-asc"
+
+var sortStyleToSortFn = map[string]func([]person.Person){
+	defaultSort:     person.SortGenderLastNameAsc,
+	"birthdate-asc": person.SortBirthdateAsc,
+	"lastname-desc": person.SortLastNameDesc,
+}
+
+type sortStyle struct {
+	str string
+	fn  func([]person.Person)
+}
 
 func (s sortStyle) String() string {
-	return string(s)
+	return s.str
 }
 
 func (s *sortStyle) Set(str string) error {
-	if !contains(person.SortStyles, str) {
-		return fmt.Errorf("invalid value, allowed values are %s", strings.Join(person.SortStyles, ", "))
+	sortFn, ok := sortStyleToSortFn[str]
+	if !ok {
+		possibleSortStyles := []string{}
+		for key := range sortStyleToSortFn {
+			possibleSortStyles = append(possibleSortStyles, key)
+		}
+		sort.Strings(possibleSortStyles)
+		return fmt.Errorf("invalid value, allowed values are %s", strings.Join(possibleSortStyles, ", "))
 	}
-	*s = sortStyle(str)
+	s.str = str
+	s.fn = sortFn
 	return nil
 }
 
-func contains(xs []string, y string) bool {
-	for _, x := range xs {
-		if x == y {
-			return true
-		}
-	}
-	return false
-}
-
 func main() {
-	var sortStyle sortStyle = sortStyle(person.SortStyles[0])
-	flag.Var(&sortStyle, "sort", "how to sort the data")
-	flag.Parse()
-	persons, errs := parseDataFromFiles(flag.Args())
+	var ss = sortStyle{str: defaultSort, fn: sortStyleToSortFn[defaultSort]}
+	fs := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	fs.Var(&ss, "sort", "how to sort the data")
+	if err := fs.Parse(os.Args[1:]); err != nil {
+		os.Exit(2)
+	}
+	persons, errs := parseDataFromFiles(fs.Args())
 	if len(errs) > 0 {
 		fmt.Fprintln(os.Stderr, strings.Join(errs, "\n"))
 		os.Exit(1)
 	}
-	person.Sort(string(sortStyle), persons)
+	ss.fn(persons)
 	for _, p := range persons {
 		fmt.Println(person.Marshal(p))
 	}

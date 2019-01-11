@@ -17,24 +17,9 @@ type Person struct {
 	DateOfBirth   time.Time
 }
 
-// Parse converts a list of fields into a Person struct.
+// Parse converts a list of fields into a Person struct. It MUST be
+// passed a slice of at least 5 otherwise it will panic.
 func Parse(fields []string) (Person, []string) {
-	// TODO: This constant 5 now lives in 2 places which seems not
-	// good. I think it should be passed into this package and the
-	// parsefile package. That would mean making these 2 packages
-	// more general.
-	const needNumFields = 5
-	if l := len(fields); l != needNumFields {
-		// TODO: I think this should be a panic instead of a
-		// parse error thingy (we could even just let this
-		// function panic naturally). Because there is NEVER a
-		// reason this function should be passed a slice that
-		// has a length less than 5. If that ever happens it
-		// is clearly the callers fault so why should this
-		// function worry about checking for a condition which
-		// should never happen?
-		return Person{}, []string{fmt.Sprintf("fields slice has length %d but must be exactly length %d", l, needNumFields)}
-	}
 	parseErrs := []string{}
 	nonEmptyFieldNames := []string{"last name", "first name", "gender", "favorite color"}
 	for i, fieldName := range nonEmptyFieldNames {
@@ -61,41 +46,28 @@ func Marshal(p Person) string {
 	return fmt.Sprintf("%s,%s,%s,%s,%02d/%02d/%d", p.LastName, p.FirstName, p.Gender, p.FavoriteColor, month, day, year)
 }
 
-// These constants are used to dispatch to a certain way of sorting
-// the person data.
-const (
-	GenderThenLastNameAsc = "gender-lastname-asc"
-	BirthDateAsc          = "birthdate-asc"
-	LastNameDesc          = "lastname-desc"
-)
+// SortGenderLastNameAsc sorts a slice of Person structs females first
+// then by last name ascending.
+func SortGenderLastNameAsc(persons []Person) {
+	sort.SliceStable(persons, func(i int, j int) bool {
+		if persons[i].Gender == persons[j].Gender {
+			return strings.ToLower(persons[i].LastName) < strings.ToLower(persons[j].LastName)
+		}
+		return persons[i].Gender < persons[j].Gender
+	})
+}
 
-// SortStyles contains all the possible sort styles that can be
-// achieved. TODO: See TODO in main around sortStyle
-var SortStyles = []string{GenderThenLastNameAsc, BirthDateAsc, LastNameDesc}
+// SortBirthdateAsc sorts a slice of Person structs by birth date.
+func SortBirthdateAsc(persons []Person) {
+	sort.SliceStable(persons, func(i int, j int) bool {
+		return persons[i].DateOfBirth.Before(persons[j].DateOfBirth)
+	})
+}
 
-// Sort sorts a slice of Person structs in place in a couple different
-// ways.
-func Sort(sortStyle string, persons []Person) {
-	if sortStyle == BirthDateAsc {
-		sort.SliceStable(persons, func(i int, j int) bool {
-			return persons[i].DateOfBirth.Before(persons[j].DateOfBirth)
-		})
-		return
-	}
-	if sortStyle == LastNameDesc {
-		sort.SliceStable(persons, func(i int, j int) bool {
-			return strings.ToLower(persons[i].LastName) > strings.ToLower(persons[j].LastName)
-		})
-		return
-	}
-	if sortStyle == GenderThenLastNameAsc {
-		sort.SliceStable(persons, func(i int, j int) bool {
-			if persons[i].Gender == persons[j].Gender {
-				return strings.ToLower(persons[i].LastName) < strings.ToLower(persons[j].LastName)
-			}
-			return persons[i].Gender < persons[j].Gender
-		})
-		return
-	}
-	panic(fmt.Sprintf("invalid sort style %q passed", sortStyle))
+// SortLastNameDesc sorts a slice of Person structs by last name
+// descending.
+func SortLastNameDesc(persons []Person) {
+	sort.SliceStable(persons, func(i int, j int) bool {
+		return strings.ToLower(persons[i].LastName) > strings.ToLower(persons[j].LastName)
+	})
 }
