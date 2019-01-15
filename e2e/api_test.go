@@ -12,7 +12,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	const numRetries = 10
+	const numRetries = 20
 	for i := 0; i < numRetries; i++ {
 		if apiIsUp() {
 			exitCode := m.Run()
