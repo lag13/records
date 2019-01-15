@@ -22,6 +22,17 @@ jobs:
             go get github.com/kisielk/errcheck
             ./.circleci/static-checks
       - run:
-          name: Run e2e tests
+          name: Run command-line e2e tests
           command: |
             ./e2e/cmdline
+      - setup_remote_docker
+      - run:
+          name: Build and Run Application Image
+          command: |
+            docker build --tag records .
+            docker run --detach --name localhost records
+      - run:
+          name: Run API e2e tests
+          command: |
+            docker build --file e2e/Dockerfile --tag e2e .
+            docker run --link localhost e2e
