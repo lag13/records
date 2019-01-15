@@ -37,10 +37,8 @@ func prependFileInfo(fileName string, lineNum int, msgs []string) []string {
 // file content semantic related errors) it still feels too
 // complicated especially for main. I should be able to simplify it
 // somehow. Maybe I just need to put more of the loops into the units.
-// I think I did not do something like that originally because I felt
-// like exposing a "do transformation on a single thing" should be all
-// that is necessary for the unit to expose. Applying that
-// transformation on multiple things is pretty trivial. Hmmmmmm
+// God I wish Go had map and other such operations which operate on
+// collections.
 func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 	type simpleFile struct {
 		Name    string
@@ -77,8 +75,10 @@ func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 	}
 	filesRecords := [][][]string{}
 	{ // validate the syntax of the data
+		const possibleDelimiters = "|, "
+		const numFieldsInRecord = 5
 		for _, file := range files {
-			records, csvParseErrs := multicsv.ReadAll("|, ", 5, file.Content)
+			records, csvParseErrs := multicsv.ReadAll(possibleDelimiters, numFieldsInRecord, file.Content)
 			if len(csvParseErrs) > 0 {
 				parseErrs = append(parseErrs, prependFileInfo(file.Name, 0, csvParseErrs)...)
 				continue

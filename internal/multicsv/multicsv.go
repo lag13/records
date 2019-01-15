@@ -60,11 +60,11 @@ func ReadAll(delimiters string, numFieldsPerRecord int, r io.Reader) ([][]string
 		}
 		allFields = append(allFields, fields)
 	}
-	// TODO: I'm not sure that I like returning a []string type
-	// when something goes wrong with reading the file. Feels like
-	// we should be returning an actual error, but since we don't
-	// do anything different even IF an error were to happen this
-	// is fine for now.
+	// TODO: I'm not sure that I like returning a []string when
+	// something goes wrong with reading the file. Feels like we
+	// should be returning an actual error, but since we don't do
+	// anything different even IF an error were to happen this is
+	// fine for now.
 	if err := scanner.Err(); err != nil {
 		return nil, []string{fmt.Sprintf("unexpected error reading file: %v", err)}
 	}
