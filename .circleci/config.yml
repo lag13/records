@@ -30,8 +30,7 @@ jobs:
           name: Build and Run Application Image
           command: |
             docker build -t records .
-            docker run -p '8080:8080' records
-          background: true
+            docker run --detach --publish '8080:8080' records
       - run:
           name: Run API e2e tests
           command: |
