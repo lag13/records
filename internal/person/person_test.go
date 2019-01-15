@@ -17,11 +17,6 @@ func TestParse(t *testing.T) {
 		parseErrs  []string
 	}{
 		{
-			name:      "invalid number of fields",
-			fields:    []string{"one field for some reason"},
-			parseErrs: []string{"fields slice has length 1 but must be exactly length 5"},
-		},
-		{
 			// TODO: The error message for this test (and
 			// others like the e2e ones) are really bad
 			// because it's tough for the user to see
@@ -79,14 +74,14 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
-func TestSort(t *testing.T) {
+func TestSorts(t *testing.T) {
 	tests := []struct {
-		sortStyle   string
+		sortFn      func([]person.Person)
 		persons     []person.Person
 		wantPersons []person.Person
 	}{
 		{
-			person.GenderThenLastNameAsc,
+			person.SortGenderLastNameAsc,
 			[]person.Person{
 				{LastName: "Aarons", Gender: "Male"},
 				{LastName: "Brady", Gender: "Female"},
@@ -107,7 +102,7 @@ func TestSort(t *testing.T) {
 			},
 		},
 		{
-			person.BirthDateAsc,
+			person.SortBirthdateAsc,
 			[]person.Person{
 				{DateOfBirth: time.Date(1900, time.December, 2, 0, 0, 0, 0, time.UTC)},
 				{DateOfBirth: time.Date(2000, time.December, 2, 0, 0, 0, 0, time.UTC)},
@@ -122,7 +117,7 @@ func TestSort(t *testing.T) {
 			},
 		},
 		{
-			person.LastNameDesc,
+			person.SortLastNameDesc,
 			[]person.Person{
 				{LastName: "Aarons"},
 				{LastName: "Brady"},
@@ -141,9 +136,9 @@ func TestSort(t *testing.T) {
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("sorting with sort style %s", test.sortStyle), func(t *testing.T) {
-			person.Sort(test.sortStyle, test.persons)
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("testing sorting function %d", i), func(t *testing.T) {
+			test.sortFn(test.persons)
 			if got, want := test.persons, test.wantPersons; !reflect.DeepEqual(got, want) {
 				// TODO: This error message if the test fails is simply
 				// terrible but it's such an easy test to pass that I don't

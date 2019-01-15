@@ -1,12 +1,44 @@
-#!/bin/bash -e
+#!/bin/bash
+
+# I decided to compile this because if you run a go program with 'go
+# run' and your code calls os.Exit then 'go run' will print out the
+# exit code and checking for that in tests did not feel right to me:
+# https://gobyexample.com/exit
+go build main.go
+
+# Invalid value for a command line flag passed
+output=$(./main -sort invalid-AHHHHH 2>&1)
+wantOutputContains="invalid value, allowed values are"
+if [[ "$output" != *"$wantOutputContains"* ]]
+then
+    echo "When running the command line app with an invalid flag output was:
+
+$output
+
+which does NOT contain the string: $wantOutputContains"
+fi
+
+# We could not open the files that were specified for whatever reason
+output=$(./main e2e/nonexistent.txt e2e/nonexistent2.txt 2>&1)
+wantOutput=$(cat <<EOF
+open e2e/nonexistent.txt: no such file or directory
+open e2e/nonexistent2.txt: no such file or directory
+EOF
+)
+if [ "$output" != "$wantOutput" ]
+then
+    echo "When running the command line app on invalid data with an invalid structure, got output:
+$output"
+    echo "Want output:
+$wantOutput"
+    exit 1
+fi
 
 # The structure/syntax/grammar of the data is invalid
-output=$(go run main.go e2e/invalidDataStructure.txt e2e/nonexistent.txt)
+output=$(./main e2e/invalidDataStructure.txt 2>&1)
 wantOutput=$(cat <<EOF
-Invalid Input:
 e2e/invalidDataStructure.txt:1: there should only be one type of separator in a single line but multiple separators ('|', ',') were specified
 e2e/invalidDataStructure.txt:3: there were only 3 fields when there should have been 5
-e2e/nonexistent.txt: file does not exist
 EOF
 )
 if [ "$output" != "$wantOutput" ]
@@ -19,9 +51,8 @@ $wantOutput"
 fi
 
 # The semantics of the data is invalid
-output=$(go run main.go e2e/invalidDataSemantics.txt)
+output=$(./main e2e/invalidDataSemantics.txt 2>&1)
 wantOutput=$(cat <<EOF
-Invalid Input:
 e2e/invalidDataSemantics.txt:2: gender (field 3) must be a non-empty string
 e2e/invalidDataSemantics.txt:2: date of birth (field 5) must have the format YYYY-MM-DD
 e2e/invalidDataSemantics.txt:3: last name (field 1) must be a non-empty string
@@ -36,8 +67,8 @@ $wantOutput"
     exit 1
 fi
 
-# The command works as expected
-output=$(go run main.go -sort gender-lastname-asc e2e/atla.csv e2e/lotr.ssv e2e/wot.psv)
+# The command works as expected when reading from files
+output=$(./main e2e/atla.csv e2e/lotr.ssv e2e/wot.psv)
 
 # The desired output was created by running this bash one-liner:
 
@@ -69,6 +100,42 @@ Mandragoran,al'Lan,Male,Green,07/11/1866
 MeatAndSarcasmGuy,Sokka,Male,Blue,10/17/1845
 Took,Peregrin,Male,Yellow,06/09/1932
 Uncle,Iroh,Male,White,08/24/1820
+EOF
+)
+if [ "$output" != "$wantOutput" ]
+then
+    echo "When running the command line app to sort by gender (females first then sort by last name), got output:
+$output"
+    echo "Want output:
+$wantOutput"
+    exit 1
+fi
+
+# The command works as expected when reading from stdin
+output=$(cat e2e/atla.csv e2e/lotr.ssv e2e/wot.psv | ./main -sort lastname-desc)
+wantOutput=$(cat <<EOF
+Undomiel,Arwen,Female,Brown,10/10/1300
+Uncle,Iroh,Male,White,08/24/1820
+Took,Peregrin,Male,Yellow,06/09/1932
+SoFullOfHope,Katara,Female,Blue,09/21/1846
+Rohan,Eowyn,Female,Gold,07/27/1950
+MeatAndSarcasmGuy,Sokka,Male,Blue,10/17/1845
+Mandragoran,al'Lan,Male,Green,07/11/1866
+Lee,Zuko,Male,Red,07/04/1842
+Isildur,Aragorn,Male,Brown,08/20/1600
+Grey,Gandalf,Male,Grey,04/19/1100
+Finarfin,Galadriel,Female,White,02/01/1200
+Damodred,Moiraine,Female,Blue,09/15/1876
+Crazy,Azula,Female,Blood-Red,12/30/1842
+Cauthon,Mat,Male,Black,03/04/1890
+Brandybuck,Meriadoc,Male,Green,08/12/1914
+BlindBandit,Toph,Female,Green,03/29/1846
+Baggins,Frodo,Male,Green,09/22/1900
+Aybara,Perrin,Male,Yellow,05/06/1890
+Avatar,Aang,Male,Light-Orange,12/13/1760
+al'Vere,Egwene,Female,White,11/03/1888
+al'Thor,Rand,Male,Red,01/02/1890
+al'Meara,Nynaeve,Female,Yellow,11/03/1886
 EOF
 )
 if [ "$output" != "$wantOutput" ]
