@@ -4,7 +4,7 @@
 # run' and your code calls os.Exit then 'go run' will print out the
 # exit code and checking for that in tests did not feel right to me:
 # https://gobyexample.com/exit
-go build main.go
+go build cmd/cmdline/main.go
 
 # Invalid value for a command line flag passed
 output=$(./main -sort invalid-AHHHHH 2>&1)

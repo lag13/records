@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+# This script, as its name suggests, runs all API related e2e tests.
+
+api_host=localhost
+# This logic exists so this script can be used to run these tests
+# locally or in circleci. It exists because in circleci the host for a
+# running docker container (which is how we run the tests) will,
+# unfortunately, not be "localhost".
+if [ "$CIRCLECI" = "true" ]; then
+    api_host=records
+fi
+
+API_ENDPOINT=http://${api_host}:8080 go test -v -tags=e2e "$@" ./e2e
