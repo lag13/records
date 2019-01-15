@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 }
 
 func apiIsUp() bool {
-	resp, err := http.Get(fmt.Sprintf("%s/healthcheck", os.Getenv("API_ENDPOINT")))
+	resp, err := http.Get("http://localhost:8080/healthcheck")
 	if err != nil {
 		fmt.Printf("when checking if the API was up we got an error which was: %v\n", err)
 		return false
