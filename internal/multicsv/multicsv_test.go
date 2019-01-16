@@ -17,6 +17,61 @@ func (m mockErrReader) Read([]byte) (int, error) {
 	return 0, errors.New("non-nil error")
 }
 
+func TestParse(t *testing.T) {
+	tests := []struct {
+		name               string
+		s                  string
+		delimiters         string
+		numFieldsPerRecord int
+		wantRecord         []string
+		wantParseErr       string
+	}{
+		{
+			name:               "no delimiters in string",
+			s:                  "heytherearenoseparators",
+			delimiters:         "|, ",
+			numFieldsPerRecord: 0,
+			wantRecord:         nil,
+			wantParseErr:       "there are no delimiters",
+		},
+		{
+			name:               "multiple delimiters in string",
+			s:                  "hey|there,buddy !",
+			delimiters:         "|, ",
+			numFieldsPerRecord: 3,
+			wantRecord:         nil,
+			wantParseErr:       "there should only be one type of separator but multiple ('|', ',', ' ') were specified",
+		},
+		{
+			name:               "incorrect number of fields in record",
+			s:                  "hey,there,buddy",
+			delimiters:         "|, ",
+			numFieldsPerRecord: 7,
+			wantRecord:         nil,
+			wantParseErr:       "there were 3 fields when there should have been 7",
+		},
+		{
+			name:               "incorrect number of fields in record",
+			s:                  "hey&there&buddy",
+			delimiters:         "|, &",
+			numFieldsPerRecord: 3,
+			wantRecord:         []string{"hey", "there", "buddy"},
+			wantParseErr:       "",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			record, parseErr := multicsv.Parse(test.s, test.delimiters, test.numFieldsPerRecord)
+			if got, want := record, test.wantRecord; !reflect.DeepEqual(got, want) {
+				t.Errorf("got record %+v, want %+v", got, want)
+			}
+			if got, want := parseErr, test.wantParseErr; got != want {
+				t.Errorf("got parse error %q, want %q", got, want)
+			}
+		})
+	}
+}
+
 func TestReadAll(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -35,9 +90,9 @@ noseps
 this,is,an,okay,line
 too|few|seps`),
 			wantParseErrs: []string{
-				"1: there should only be one type of separator in a single line but multiple separators ('|', ',', ' ') were specified",
-				"2: there is only one field in the record but there should be 5",
-				"4: there were only 3 fields when there should have been 5",
+				"1: there should only be one type of separator but multiple ('|', ',', ' ') were specified",
+				"2: there are no delimiters",
+				"4: there were 3 fields when there should have been 5",
 			},
 		},
 		{

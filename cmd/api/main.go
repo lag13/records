@@ -23,6 +23,12 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 	mux.HandleFunc("/records", func(w http.ResponseWriter, r *http.Request) {
+		// statusCode, body := ASDF(r)
+		// w.WriteHeader(statusCode)
+		// if statusCode == 200 return
+		// enc := json.NewEncoder(w)
+		// enc.Encode(body)
+
 		// TODO: I wrote this code quickly to get a sense of
 		// what needs to happen and I plan to reorganize and
 		// unit test it. My problem though is that I don't
@@ -40,14 +46,24 @@ func main() {
 		// and not the exact wording (we will still test that
 		// the happy path transformation works as expected but
 		// I'm more okay with that since it probably won't
-		// change much if at all). Or maybe this stuff is so
-		// simple that covering it with e2e tests is
-		// sufficient?
+		// change much if at all). Because if you are going to
+		// just be passing along that information anyway, why
+		// should you care what it is? (then again, if you
+		// view some function as a black box then it better
+		// return the same outputs for the same inputs). Or
+		// maybe this stuff is so simple that covering it with
+		// e2e tests is sufficient?
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`nopity nope`))
 			return
 		}
+		// for these handlers have them return a structured
+		// response body and status code. Then on this level
+		// they can be marshalled and the status code written.
+		// We may not even need an explicit json marshalling
+		// package like I have with cangrade since it's so
+		// simple.
 		lines, parseErrs := multicsv.ReadAll("|, ", 5, r.Body)
 		if len(parseErrs) > 0 {
 			w.WriteHeader(http.StatusBadRequest)
@@ -63,7 +79,13 @@ func main() {
 		db = append(db, p)
 		w.WriteHeader(http.StatusOK)
 	})
+	// for these GET handlers, they are so similar I could
+	// probably have one struct which accepts a function to do the
+	// specific sort and such.
 	mux.HandleFunc("/records/gender", func(w http.ResponseWriter, r *http.Request) {
+		// body := sortThing(sorter, db)
+		// w.WriteHeader(200)
+		// w.Write(body)
 		// TODO: Probably should copy the db here so this GET
 		// isn't modifying anything.
 		person.SortGenderLastNameAsc(db)
