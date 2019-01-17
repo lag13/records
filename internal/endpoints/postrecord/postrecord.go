@@ -8,16 +8,18 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lag13/records/internal/db"
 	"github.com/lag13/records/internal/multicsv"
 	"github.com/lag13/records/internal/person"
 	"github.com/lag13/records/internal/response"
 )
 
 // PostRecord adds a record to the database.
-func PostRecord(req *http.Request) (response.Structured, error) {
+func PostRecord(req *http.Request) (person.Person, response.Structured, error) {
+	// TODO: There is repetition in this checking for the correct
+	// method and returning an error message if it is not the
+	// correct one.
 	if req.Method != http.MethodPost {
-		return response.Structured{
+		return person.Person{}, response.Structured{
 			StatusCode: http.StatusBadRequest,
 			Errors:     []string{fmt.Sprintf("this endpoint works with a POST request, not a %s", req.Method)},
 		}, nil
@@ -29,7 +31,7 @@ func PostRecord(req *http.Request) (response.Structured, error) {
 		// I use pkg/errors to establish a stacktrace at this
 		// point in the code so when the error gets logged we
 		// know exactly where the failure happened.
-		return response.Structured{
+		return person.Person{}, response.Structured{
 			StatusCode: http.StatusInternalServerError,
 			Errors:     []string{"unexpected error"},
 		}, err
@@ -40,23 +42,20 @@ func PostRecord(req *http.Request) (response.Structured, error) {
 	// in the same repository because it couples them. But perhaps
 	// I'll make an exception with the thought that *this* code,
 	// although unit tested, is not going to be consumed by anyone
-	// else (except main of course)
+	// else (except main of course).
 	record, parseErr := multicsv.Parse(line, "|, ", 5)
 	if parseErr != "" {
-		return response.Structured{
+		return person.Person{}, response.Structured{
 			StatusCode: http.StatusBadRequest,
 			Errors:     []string{parseErr},
 		}, nil
 	}
 	p, parseErrs := person.Parse(record)
 	if len(parseErrs) > 0 {
-		return response.Structured{
+		return person.Person{}, response.Structured{
 			StatusCode: http.StatusBadRequest,
 			Errors:     parseErrs,
 		}, nil
 	}
-	// TODO: Mutex of just return the person and let someone else
-	// deal with it.
-	db.Persons = append(db.Persons, p)
-	return response.Structured{StatusCode: http.StatusOK}, nil
+	return p, response.Structured{StatusCode: http.StatusOK}, nil
 }

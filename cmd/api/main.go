@@ -3,19 +3,20 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
+	"sync"
 	"time"
 
-	"github.com/lag13/records/internal/multicsv"
+	"github.com/lag13/records/internal/db"
+	"github.com/lag13/records/internal/endpoints/getsortperson"
+	"github.com/lag13/records/internal/endpoints/postrecord"
 	"github.com/lag13/records/internal/person"
 )
 
-var db = []person.Person{}
+var mu = &sync.Mutex{}
 
 func main() {
 	mux := http.NewServeMux()
@@ -23,96 +24,57 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 	mux.HandleFunc("/records", func(w http.ResponseWriter, r *http.Request) {
-		// statusCode, body := ASDF(r)
-		// w.WriteHeader(statusCode)
-		// if statusCode == 200 return
-		// enc := json.NewEncoder(w)
-		// enc.Encode(body)
-
-		// TODO: I wrote this code quickly to get a sense of
-		// what needs to happen and I plan to reorganize and
-		// unit test it. My problem though is that I don't
-		// like it when a units from the same repository
-		// reference eachother because if one unit breaks then
-		// the other will too. So, I'm not sure how to
-		// structure this code into a unit because it
-		// definitely needs to reference other units in this
-		// repository. Perhaps I make the unit accept two
-		// functions which encapsulate what we need from
-		// multicsv and person then in the real scenario we
-		// pass them in, but I'm not sure if I like that extra
-		// layer of abstraction. Or maybe we use the functions
-		// directly but only test for the presence of errors
-		// and not the exact wording (we will still test that
-		// the happy path transformation works as expected but
-		// I'm more okay with that since it probably won't
-		// change much if at all). Because if you are going to
-		// just be passing along that information anyway, why
-		// should you care what it is? (then again, if you
-		// view some function as a black box then it better
-		// return the same outputs for the same inputs). Or
-		// maybe this stuff is so simple that covering it with
-		// e2e tests is sufficient?
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`nopity nope`))
+		p, resp, err := postrecord.PostRecord(r)
+		if err != nil {
+			log.Print(err)
+		}
+		w.WriteHeader(resp.StatusCode)
+		if len(resp.Errors) == 0 {
+			mu.Lock()
+			defer mu.Unlock()
+			db.Persons = append(db.Persons, p)
 			return
 		}
-		// for these handlers have them return a structured
-		// response body and status code. Then on this level
-		// they can be marshalled and the status code written.
-		// We may not even need an explicit json marshalling
-		// package like I have with cangrade since it's so
-		// simple.
-		lines, parseErrs := multicsv.ReadAll("|, ", 5, r.Body)
-		if len(parseErrs) > 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(fmt.Sprintf("got some errors %s", parseErrs[0])))
-			return
+		// TODO: This json encoding logic is duplicated in
+		// other places and should be consolidated. More
+		// generally, the logic of writing the response is
+		// duplicated and could be consolidated.
+		body, err := json.Marshal(resp)
+		if err != nil {
+			// The only time json.Marshal fails is if a
+			// type is passed in which cannot be
+			// marshalled so to me a panic is acceptable
+			// here.
+			panic(err)
 		}
-		p, parseErrs := person.Parse(lines[0])
-		if len(parseErrs) > 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(fmt.Sprintf("got some errors %s", strings.Join(parseErrs, ", "))))
-			return
-		}
-		db = append(db, p)
-		w.WriteHeader(http.StatusOK)
+		w.Write(body)
 	})
-	// for these GET handlers, they are so similar I could
-	// probably have one struct which accepts a function to do the
-	// specific sort and such.
 	mux.HandleFunc("/records/gender", func(w http.ResponseWriter, r *http.Request) {
-		// body := sortThing(sorter, db)
-		// w.WriteHeader(200)
-		// w.Write(body)
-		// TODO: Probably should copy the db here so this GET
-		// isn't modifying anything.
-		person.SortGenderLastNameAsc(db)
-		b, err := json.Marshal(db)
+		resp := getsortperson.Sort(r, person.SortGenderLastNameAsc, db.Persons)
+		w.WriteHeader(resp.StatusCode)
+		body, err := json.Marshal(resp)
 		if err != nil {
 			panic(err)
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Write(b)
+		w.Write(body)
 	})
 	mux.HandleFunc("/records/birthdate", func(w http.ResponseWriter, r *http.Request) {
-		person.SortBirthdateAsc(db)
-		b, err := json.Marshal(db)
+		resp := getsortperson.Sort(r, person.SortBirthdateAsc, db.Persons)
+		w.WriteHeader(resp.StatusCode)
+		body, err := json.Marshal(resp)
 		if err != nil {
 			panic(err)
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Write(b)
+		w.Write(body)
 	})
 	mux.HandleFunc("/records/name", func(w http.ResponseWriter, r *http.Request) {
-		person.SortLastNameDesc(db)
-		b, err := json.Marshal(db)
+		resp := getsortperson.Sort(r, person.SortLastNameDesc, db.Persons)
+		w.WriteHeader(resp.StatusCode)
+		body, err := json.Marshal(resp)
 		if err != nil {
 			panic(err)
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Write(b)
+		w.Write(body)
 	})
 	srv := http.Server{
 		Addr:    ":8080",

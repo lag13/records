@@ -10,11 +10,11 @@ import (
 
 // Person contains data about a person.
 type Person struct {
-	LastName      string
-	FirstName     string
-	Gender        string
-	FavoriteColor string
-	DateOfBirth   time.Time
+	LastName      string    `json:"last_name"`
+	FirstName     string    `json:"first_name"`
+	Gender        string    `json:"gender"`
+	FavoriteColor string    `json:"favorite_color"`
+	DateOfBirth   time.Time `json:"birthdate"`
 }
 
 // Parse converts a list of fields into a Person struct. It MUST be

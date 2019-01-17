@@ -63,7 +63,7 @@ func readAll(r io.Reader) []byte {
 	return b
 }
 
-func TestAPIFails(t *testing.T) {
+func TestPostFails(t *testing.T) {
 	resp := sendRequest(newRequest(http.MethodPost, "/records", strings.NewReader("hey,there buddy")))
 	if got, want := resp.StatusCode, http.StatusBadRequest; got != want {
 		t.Errorf("when posting invalid data got status code %d, want %d", got, want)
@@ -76,8 +76,8 @@ func TestAPIFails(t *testing.T) {
 	// These error messages are meant for humans, not machines so
 	// if they vary I'm not sure it should matter. Testing that an
 	// error message exists seems important but I don't think we
-	// have to care about the specific contents.
-	if got, want := string(body), `{"error":"there should only be one type of separator in a single line but multiple separators (',', ' ') were specified"}`; got != want {
+	// have to care overly much about the specific contents.
+	if got, want := string(body), `{"errors":["there should only be one type of separator but multiple (',', ' ') were specified"]}`; got != want {
 		t.Errorf("when posting invalid data got body %s, want %s", got, want)
 	}
 }
@@ -103,7 +103,8 @@ func TestAPISucceeds(t *testing.T) {
 		t.Errorf("when getting records sorted by gender, got status code %d, wanted %d", got, want)
 	}
 	body := readAll(resp.Body)
-	if got, want := string(body), `{"data":["BlindBandit,Toph,Female,Green,03/29/1846","Crazy,Azula,Female,Blood-Red,12/30/1842","SoFullOfHope,Katara,Female,Blue,09/21/1846","Avatar,Aang,Male,Light-Orange,12/13/1760","Lee,Zuko,Male,Red,07/04/1842","MeatAndSarcasmGuy,Sokka,Male,Blue,10/17/1845","Uncle,Iroh,Male,White,08/24/1820"]}`; got != want {
+	// TODO: This is just attrocious
+	if got, want := string(body), `{"data":[{"last_name":"BlindBandit","first_name":"Toph","gender":"Female","favorite_color":"Green","birthdate":"1846-03-29T00:00:00Z"},{"last_name":"Crazy","first_name":"Azula","gender":"Female","favorite_color":"Blood-Red","birthdate":"1842-12-30T00:00:00Z"},{"last_name":"SoFullOfHope","first_name":"Katara","gender":"Female","favorite_color":"Blue","birthdate":"1846-09-21T00:00:00Z"},{"last_name":"Avatar","first_name":"Aang","gender":"Male","favorite_color":"Light-Orange","birthdate":"1760-12-13T00:00:00Z"},{"last_name":"Lee","first_name":"Zuko","gender":"Male","favorite_color":"Red","birthdate":"1842-07-04T00:00:00Z"},{"last_name":"MeatAndSarcasmGuy","first_name":"Sokka","gender":"Male","favorite_color":"Blue","birthdate":"1845-10-17T00:00:00Z"},{"last_name":"Uncle","first_name":"Iroh","gender":"Male","favorite_color":"White","birthdate":"1820-08-24T00:00:00Z"}]}`; got != want {
 		t.Errorf("when getting records sorted by gender, got response body %s, wanted %s", got, want)
 	}
 }

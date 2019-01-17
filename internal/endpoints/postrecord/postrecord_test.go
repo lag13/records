@@ -8,8 +8,10 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/lag13/records/internal/endpoints/postrecord"
+	"github.com/lag13/records/internal/person"
 	"github.com/lag13/records/internal/response"
 )
 
@@ -29,10 +31,11 @@ func (m mockErrReader) Read([]byte) (int, error) {
 
 func TestPostRecord(t *testing.T) {
 	tests := []struct {
-		name     string
-		req      *http.Request
-		wantResp response.Structured
-		errMsg   string
+		name       string
+		req        *http.Request
+		wantPerson person.Person
+		wantResp   response.Structured
+		errMsg     string
 	}{
 		{
 			name: "invalid http method",
@@ -76,6 +79,13 @@ func TestPostRecord(t *testing.T) {
 this
 is
 ignored`)),
+			wantPerson: person.Person{
+				LastName:      "Grey",
+				FirstName:     "Gandalf",
+				Gender:        "Male",
+				FavoriteColor: "Rainbow",
+				DateOfBirth:   time.Date(1100, 4, 3, 0, 0, 0, 0, time.UTC),
+			},
 			wantResp: response.Structured{
 				StatusCode: 200,
 			},
@@ -84,16 +94,16 @@ ignored`)),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resp, err := postrecord.PostRecord(test.req)
+			p, resp, err := postrecord.PostRecord(test.req)
 			if got, want := errToStr(err), test.errMsg; got != want {
 				t.Errorf("got error %q, want %q", got, want)
 			}
 			if got, want := resp, test.wantResp; !reflect.DeepEqual(got, want) {
 				t.Errorf("got resp %+v, want %+v", got, want)
 			}
-			// TODO: Perhaps I should check that the
-			// database was updated? Or perhaps I should
-			// do that up in main?
+			if got, want := p, test.wantPerson; got != want {
+				t.Errorf("got person %+v, want %+v", got, want)
+			}
 		})
 	}
 }
