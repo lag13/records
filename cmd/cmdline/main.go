@@ -51,8 +51,9 @@ func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 			// we cannot do a simple 'defer fh.Close()'
 			// because the errcheck tool will say we're
 			// forgetting to check an error. Ignoring the
-			// error is fine because we are reading from
-			// the file. TODO: check out
+			// error is fine in this case because we are
+			// reading from the file as opposed to
+			// writing. TODO: check out
 			// https://github.com/alecthomas/gometalinter
 			// as a way to consolidate static checks AND
 			// it seems you can add a comment instructing

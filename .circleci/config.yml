@@ -30,6 +30,8 @@ jobs:
           name: Build and Run Application Image
           command: |
             docker build --tag records .
+            # TODO: Is it considered bad practice to name a container
+            # "localhost"?
             docker run --detach --name localhost records
       - run:
           name: Run API e2e tests

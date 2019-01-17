@@ -10,13 +10,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lag13/records/internal/db"
 	"github.com/lag13/records/internal/endpoints/getsortperson"
 	"github.com/lag13/records/internal/endpoints/postrecord"
 	"github.com/lag13/records/internal/person"
 )
 
-var mu = &sync.Mutex{}
+var (
+	db = []person.Person{}
+	mu = &sync.Mutex{}
+)
 
 func writeAndLogErr(w http.ResponseWriter, body []byte) {
 	if _, err := w.Write(body); err != nil {
@@ -38,7 +40,7 @@ func main() {
 		if len(resp.Errors) == 0 {
 			mu.Lock()
 			defer mu.Unlock()
-			db.Persons = append(db.Persons, p)
+			db = append(db, p)
 			return
 		}
 		// TODO: This json encoding logic is duplicated in
@@ -56,7 +58,7 @@ func main() {
 		writeAndLogErr(w, body)
 	})
 	mux.HandleFunc("/records/gender", func(w http.ResponseWriter, r *http.Request) {
-		resp := getsortperson.Sort(r, person.SortGenderLastNameAsc, db.Persons)
+		resp := getsortperson.Sort(r, person.SortGenderLastNameAsc, db)
 		w.WriteHeader(resp.StatusCode)
 		body, err := json.Marshal(resp)
 		if err != nil {
@@ -65,7 +67,7 @@ func main() {
 		writeAndLogErr(w, body)
 	})
 	mux.HandleFunc("/records/birthdate", func(w http.ResponseWriter, r *http.Request) {
-		resp := getsortperson.Sort(r, person.SortBirthdateAsc, db.Persons)
+		resp := getsortperson.Sort(r, person.SortBirthdateAsc, db)
 		w.WriteHeader(resp.StatusCode)
 		body, err := json.Marshal(resp)
 		if err != nil {
@@ -74,7 +76,7 @@ func main() {
 		writeAndLogErr(w, body)
 	})
 	mux.HandleFunc("/records/name", func(w http.ResponseWriter, r *http.Request) {
-		resp := getsortperson.Sort(r, person.SortLastNameDesc, db.Persons)
+		resp := getsortperson.Sort(r, person.SortLastNameDesc, db)
 		w.WriteHeader(resp.StatusCode)
 		body, err := json.Marshal(resp)
 		if err != nil {
