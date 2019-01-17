@@ -3,6 +3,7 @@
 package e2e_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -82,7 +83,13 @@ func TestPostFails(t *testing.T) {
 	}
 }
 
-func TestAPISucceeds(t *testing.T) {
+type apiResp struct {
+	Data []struct {
+		LastName string `json:"last_name"`
+	} `json:"data"`
+}
+
+func TestAPIGetSortsSucceed(t *testing.T) {
 	records := []string{
 		"Avatar,Aang,Male,Light-Orange,1760-12-13",
 		"MeatAndSarcasmGuy|Sokka|Male|Blue|1845-10-17",
@@ -98,13 +105,28 @@ func TestAPISucceeds(t *testing.T) {
 			t.Errorf("when posting record %q got status code %d, want %d", record, got, want)
 		}
 	}
-	resp := sendRequest(newRequest(http.MethodGet, "/records/gender", nil))
-	if got, want := resp.StatusCode, http.StatusOK; got != want {
-		t.Errorf("when getting records sorted by gender, got status code %d, wanted %d", got, want)
+	getTests := []struct {
+		endpoint     string
+		wantLastName string
+	}{
+		{"gender", "BlindBandit"},
+		{"birthdate", "Avatar"},
+		{"name", "Uncle"},
 	}
-	body := readAll(resp.Body)
-	// TODO: This is just attrocious
-	if got, want := string(body), `{"data":[{"last_name":"BlindBandit","first_name":"Toph","gender":"Female","favorite_color":"Green","birthdate":"1846-03-29T00:00:00Z"},{"last_name":"Crazy","first_name":"Azula","gender":"Female","favorite_color":"Blood-Red","birthdate":"1842-12-30T00:00:00Z"},{"last_name":"SoFullOfHope","first_name":"Katara","gender":"Female","favorite_color":"Blue","birthdate":"1846-09-21T00:00:00Z"},{"last_name":"Avatar","first_name":"Aang","gender":"Male","favorite_color":"Light-Orange","birthdate":"1760-12-13T00:00:00Z"},{"last_name":"Lee","first_name":"Zuko","gender":"Male","favorite_color":"Red","birthdate":"1842-07-04T00:00:00Z"},{"last_name":"MeatAndSarcasmGuy","first_name":"Sokka","gender":"Male","favorite_color":"Blue","birthdate":"1845-10-17T00:00:00Z"},{"last_name":"Uncle","first_name":"Iroh","gender":"Male","favorite_color":"White","birthdate":"1820-08-24T00:00:00Z"}]}`; got != want {
-		t.Errorf("when getting records sorted by gender, got response body %s, wanted %s", got, want)
+	for _, getTest := range getTests {
+		t.Run(getTest.endpoint, func(t *testing.T) {
+			resp := sendRequest(newRequest(http.MethodGet, fmt.Sprintf("/records/%s", getTest.endpoint), nil))
+			if got, want := resp.StatusCode, http.StatusOK; got != want {
+				t.Errorf("when getting records, got status code %d, wanted %d", got, want)
+			}
+			body := readAll(resp.Body)
+			var data apiResp
+			if err := json.Unmarshal(body, &data); err != nil {
+				panic(err)
+			}
+			if got, want := data.Data[0].LastName, getTest.wantLastName; got != want {
+				t.Errorf("expected the first person's last name to be %q, got %q", got, want)
+			}
+		})
 	}
 }
