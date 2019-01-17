@@ -17,7 +17,7 @@ func TestParse(t *testing.T) {
 		parseErrs  []string
 	}{
 		{
-			// TODO: The error message for this test (and
+			// TODO: The error messages for this test (and
 			// others like the e2e ones) are really bad
 			// because it's tough for the user to see
 			// clearly where the mismatch between got and
@@ -140,9 +140,11 @@ func TestSorts(t *testing.T) {
 		t.Run(fmt.Sprintf("testing sorting function %d", i), func(t *testing.T) {
 			test.sortFn(test.persons)
 			if got, want := test.persons, test.wantPersons; !reflect.DeepEqual(got, want) {
-				// TODO: This error message if the test fails is simply
-				// terrible but it's such an easy test to pass that I don't
-				// care right now. I would really like to go back and make the
+				// TODO: This error message if the
+				// test fails is simply terrible but
+				// it's such an easy test to pass that
+				// I don't care right now. I would
+				// really like to go back and make the
 				// comparisons better though.
 				t.Errorf("got sorted list %v, wanted %v", got, want)
 			}

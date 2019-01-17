@@ -19,7 +19,8 @@ import (
 func PostRecord(req *http.Request) (person.Person, response.Structured, error) {
 	// TODO: There is repetition in this checking for the correct
 	// method and returning an error message if it is not the
-	// correct one.
+	// correct one. One solution would be to use a router which
+	// allows you to specify the method when registering the path.
 	if req.Method != http.MethodPost {
 		return person.Person{}, response.Structured{
 			StatusCode: http.StatusBadRequest,
@@ -29,22 +30,22 @@ func PostRecord(req *http.Request) (person.Person, response.Structured, error) {
 	r := bufio.NewReader(req.Body)
 	line, err := r.ReadString('\n')
 	if err != nil && err != io.EOF {
-		// TODO: If I was being very good this might be where
-		// I use pkg/errors to establish a stacktrace at this
-		// point in the code so when the error gets logged we
-		// know exactly where the failure happened.
+		// TODO: If I was being very good I would use
+		// pkg/errors to establish a stacktrace at this point
+		// in the code so when the error gets logged we know
+		// exactly where the failure happened.
 		return person.Person{}, response.Structured{
 			StatusCode: http.StatusInternalServerError,
 			Errors:     []string{"unexpected error"},
 		}, err
 	}
 	line = strings.TrimSpace(line)
-	// TODO: Again, I don't like having other bits of code which
-	// are unit tested talking directly to other unit tested code
-	// in the same repository because it couples them. But perhaps
-	// I'll make an exception with the thought that *this* code,
-	// although unit tested, is not going to be consumed by anyone
-	// else (except main of course).
+	// TODO: I don't like having code, which is unit tested,
+	// talking directly to other unit tested code from the same
+	// repository because it couples them. But perhaps I'll make
+	// an exception with the thought that *this* code, although
+	// unit tested, is not going to be consumed by anyone else
+	// (except main of course).
 	record, parseErr := multicsv.Parse(line, "|, ", 5)
 	if parseErr != "" {
 		return person.Person{}, response.Structured{

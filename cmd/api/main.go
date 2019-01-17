@@ -49,7 +49,7 @@ func main() {
 		if err != nil {
 			// The only time json.Marshal fails is if a
 			// type is passed in which cannot be
-			// marshalled so to me a panic is acceptable
+			// marshalled so, to me, a panic is acceptable
 			// here.
 			panic(err)
 		}

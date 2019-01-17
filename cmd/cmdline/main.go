@@ -31,14 +31,9 @@ func prependFileInfo(fileName string, lineNum int, msgs []string) []string {
 	return info
 }
 
-// TODO: Although I like this logic better because it is a little more
-// pipeline'y and because it prints out similar groupings of errors
-// (file related errors, file content structure related errors, and
-// file content semantic related errors) it still feels too
-// complicated especially for main. I should be able to simplify it
-// somehow. Maybe I just need to put more of the loops into the units.
-// God I wish Go had map and other such operations which operate on
-// collections.
+// TODO: This logic feels too complicated especially for main. Maybe I
+// just need to put more of the loops into the units. God I wish Go
+// had map and other such operations which operate on collections.
 func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 	type simpleFile struct {
 		Name    string
@@ -53,7 +48,7 @@ func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 				parseErrs = append(parseErrs, fmt.Sprint(err))
 				continue
 			}
-			// cannot do a simple 'defer fh.Close()'
+			// we cannot do a simple 'defer fh.Close()'
 			// because the errcheck tool will say we're
 			// forgetting to check an error. Ignoring the
 			// error is fine because we are reading from
@@ -87,11 +82,11 @@ func parseDataFromFiles(fileNames []string) ([]person.Person, []string) {
 		}
 	}
 	// TODO: I don't like the repetition of this check but I'm not
-	// sure what to do about it. Hypothetically I could stop
-	// everytime I encounter any error instead of gathering them
-	// but I think its useful to the user if all problems of a
-	// certain type (like grammar vs semantic) are printed out at
-	// once. Hypothetically I could also not even bother checking
+	// sure what to do about it. Hypothetically I could stop every
+	// time I encounter any error instead of gathering them but I
+	// think its useful to the user if all problems of a certain
+	// type (like grammar vs semantic) are printed out at once.
+	// Hypothetically I could also not even bother checking
 	// parseErrs in this function at all and have it keep
 	// accumulating but that would mean some unecessary
 	// computation being done for any files without any problems.

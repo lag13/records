@@ -27,7 +27,8 @@ func Parse(s string, delimiters string, numFieldsPerRecord int) ([]string, strin
 	// TODO: I feel like this case is unecessary and a little
 	// strange since you could hypothetically pass in
 	// numFieldsPerRecord = 1 in which case there need not be any
-	// delimiters.
+	// delimiters. Maybe I should not have bothered making
+	// parameters out of delimiters and numFieldsPerRecord
 	if len(seps) == 0 {
 		return nil, "there are no delimiters"
 	}
@@ -73,8 +74,9 @@ func ReadAll(delimiters string, numFieldsPerRecord int, r io.Reader) ([][]string
 		// with this project and get something submitted so
 		// I'll leave it be. By the way, this is a perfect
 		// example of why I like functional languages, I feel
-		// like they have good tools to help you decouple
-		// things.
+		// like they're good about taking an operation which
+		// works on one thing and lifting that operation so it
+		// works on multiple things.
 		record, parseErr := Parse(scanner.Text(), delimiters, numFieldsPerRecord)
 		if parseErr != "" {
 			parseErrs = append(parseErrs, fmt.Sprintf("%d: %s", lineNum, parseErr))
@@ -84,9 +86,9 @@ func ReadAll(delimiters string, numFieldsPerRecord int, r io.Reader) ([][]string
 	}
 	// TODO: I'm not sure that I like returning a []string when
 	// something goes wrong with reading the file. Feels like we
-	// should be returning an actual error, but since we don't do
-	// anything different even IF an error were to happen this is
-	// fine for now.
+	// should be returning an actual error type, but since we
+	// don't do anything different even IF an error were to happen
+	// this is fine for now.
 	if err := scanner.Err(); err != nil {
 		return nil, []string{fmt.Sprintf("unexpected error reading file: %v", err)}
 	}
