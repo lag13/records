@@ -1,4 +1,5 @@
-// postrecord adds a record to the database
+// Package postrecord parses an POST request which will create a
+// record.
 package postrecord
 
 import (
@@ -13,7 +14,8 @@ import (
 	"github.com/lag13/records/internal/response"
 )
 
-// PostRecord adds a record to the database.
+// PostRecord parses the incoming request into a person which can then
+// be added to the database.
 func PostRecord(req *http.Request) (person.Person, response.Structured, error) {
 	// TODO: There is repetition in this checking for the correct
 	// method and returning an error message if it is not the

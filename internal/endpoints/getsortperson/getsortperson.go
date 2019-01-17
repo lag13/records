@@ -1,4 +1,4 @@
-// getsortperson defines a generic handler which will return a
+// Package getsortperson defines a generic handler which will return a
 // response of sorted person data.
 package getsortperson
 
@@ -10,6 +10,8 @@ import (
 	"github.com/lag13/records/internal/response"
 )
 
+// Sort will return a response containing the given list of people
+// sorted according to the given sorting function.
 func Sort(req *http.Request, sortFn func(ps []person.Person), ps []person.Person) response.Structured {
 	if req.Method != http.MethodGet {
 		return response.Structured{

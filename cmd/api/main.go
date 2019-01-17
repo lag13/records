@@ -18,6 +18,12 @@ import (
 
 var mu = &sync.Mutex{}
 
+func writeAndLogErr(w http.ResponseWriter, body []byte) {
+	if _, err := w.Write(body); err != nil {
+		log.Print(err)
+	}
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +53,7 @@ func main() {
 			// here.
 			panic(err)
 		}
-		w.Write(body)
+		writeAndLogErr(w, body)
 	})
 	mux.HandleFunc("/records/gender", func(w http.ResponseWriter, r *http.Request) {
 		resp := getsortperson.Sort(r, person.SortGenderLastNameAsc, db.Persons)
@@ -56,7 +62,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		w.Write(body)
+		writeAndLogErr(w, body)
 	})
 	mux.HandleFunc("/records/birthdate", func(w http.ResponseWriter, r *http.Request) {
 		resp := getsortperson.Sort(r, person.SortBirthdateAsc, db.Persons)
@@ -65,7 +71,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		w.Write(body)
+		writeAndLogErr(w, body)
 	})
 	mux.HandleFunc("/records/name", func(w http.ResponseWriter, r *http.Request) {
 		resp := getsortperson.Sort(r, person.SortLastNameDesc, db.Persons)
@@ -74,7 +80,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		w.Write(body)
+		writeAndLogErr(w, body)
 	})
 	srv := http.Server{
 		Addr:    ":8080",
