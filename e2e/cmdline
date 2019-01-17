@@ -37,8 +37,8 @@ fi
 # The structure/syntax/grammar of the data is invalid
 output=$(./main e2e/invalidDataStructure.txt 2>&1)
 wantOutput=$(cat <<EOF
-e2e/invalidDataStructure.txt:1: there should only be one type of separator in a single line but multiple separators ('|', ',') were specified
-e2e/invalidDataStructure.txt:3: there were only 3 fields when there should have been 5
+e2e/invalidDataStructure.txt:1: there should only be one type of separator but multiple ('|', ',') were specified
+e2e/invalidDataStructure.txt:3: there were 3 fields when there should have been 5
 EOF
 )
 if [ "$output" != "$wantOutput" ]

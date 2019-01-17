@@ -10,11 +10,11 @@ import (
 
 // Person contains data about a person.
 type Person struct {
-	LastName      string
-	FirstName     string
-	Gender        string
-	FavoriteColor string
-	DateOfBirth   time.Time
+	LastName      string    `json:"last_name"`
+	FirstName     string    `json:"first_name"`
+	Gender        string    `json:"gender"`
+	FavoriteColor string    `json:"favorite_color"`
+	DateOfBirth   time.Time `json:"birthdate"`
 }
 
 // Parse converts a list of fields into a Person struct. It MUST be
@@ -40,7 +40,11 @@ func Parse(fields []string) (Person, []string) {
 	return Person{fields[0], fields[1], fields[2], fields[3], dob}, nil
 }
 
-// Marshal converts a Person struct into a CSV row
+// Marshal converts a Person struct into a CSV row. TODO: This only
+// gets used by the command line tool. I get the feeling I should
+// restructure that so more logic exists in something that gets unit
+// tested instead of in main and if that happens this function could
+// live there.
 func Marshal(p Person) string {
 	year, month, day := p.DateOfBirth.Date()
 	return fmt.Sprintf("%s,%s,%s,%s,%02d/%02d/%d", p.LastName, p.FirstName, p.Gender, p.FavoriteColor, month, day, year)
